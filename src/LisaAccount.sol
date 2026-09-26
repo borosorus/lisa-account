@@ -13,11 +13,4 @@ import {ILisaAccount} from "./interfaces/ILisaAccount.sol";
 /// @dev No account behavior is implemented yet. Keeping this abstract makes
 ///      the intended OpenZeppelin primitives and client interface compile-time
 ///      checked without prematurely choosing authorization or execution policy.
-abstract contract LisaAccount is
-    Account,
-    SignerEIP7702,
-    ERC7821,
-    ERC721Holder,
-    ERC1155Holder,
-    ILisaAccount
-{}
+abstract contract LisaAccount is Account, SignerEIP7702, ERC7821, ERC721Holder, ERC1155Holder, ILisaAccount {}
