@@ -39,12 +39,12 @@ contract LisaAccount is Account, SignerEIP7702, ERC7821, ERC721Holder, ERC1155Ho
 
     /// @dev ERC-7821 remains self-authorized for direct EIP-7702 transactions
     ///      and also accepts execution from the canonical ERC-4337 EntryPoint.
-    function _erc7821AuthorizedExecutor(
-        address caller,
-        bytes32 mode,
-        bytes calldata executionData
-    ) internal view override returns (bool) {
-        return
-            caller == address(entryPoint()) || super._erc7821AuthorizedExecutor(caller, mode, executionData);
+    function _erc7821AuthorizedExecutor(address caller, bytes32 mode, bytes calldata executionData)
+        internal
+        view
+        override
+        returns (bool)
+    {
+        return caller == address(entryPoint()) || super._erc7821AuthorizedExecutor(caller, mode, executionData);
     }
 }
