@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-/// @notice Minimal external boundary between clients and a LISA-enabled account.
-/// @dev The concrete account will bind to a deployed LISA runtime address.
-///      This interface intentionally does not describe the runtime itself: LISA
-///      consumes the program as raw calldata through a low-level delegate call.
+/// @notice LISA-specific surface of a delegated smart account.
+/// @dev Standard account execution and signature interfaces are inherited
+///      separately from OpenZeppelin.
 interface ILisaAccount {
-    /// @notice LISA runtime used by this account implementation.
+    /// @notice Immutable LISA runtime used by this account implementation.
     function lisaRuntime() external view returns (address);
 
-    /// @notice Execute an encoded LISA program through the account.
-    /// @dev Authorization and delegate-call policy belong to the account
-    ///      implementation and are intentionally unspecified here.
+    /// @notice Execute an encoded LISA program in the account's context.
+    /// @dev Restricted by the account implementation to self or EntryPoint.
     function executeLisa(bytes calldata program) external payable;
 }

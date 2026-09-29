@@ -1,53 +1,56 @@
 # lisa-account
 
-Smart-account infrastructure for using LISA through an EIP-7702 delegated account.
+Minimal smart-account infrastructure for using LISA through an EIP-7702 delegated account.
 
-This repository is intentionally separate from the LISA VM/compiler implementation. The account will bind to a **deployed LISA runtime address**; it does not vendor or pin the `lisa-evm` repository.
+The account intentionally stays small and stateless. It provides standard account plumbing and delegates programmable execution to a separately deployed LISA runtime.
 
-## Intended boundary
+## Architecture
 
 ```text
 EOA
   │ EIP-7702 delegation
   ▼
 LisaAccount
-  │ authorization / account policy
-  │
+  ├─ EOA signature authority (SignerEIP7702)
+  ├─ ERC-1271 signature validation
+  ├─ ERC-4337 account validation
+  ├─ ERC-7821 atomic batch execution
+  ├─ ERC-721 / ERC-1155 receiving
   └─ executeLisa(program)
          │ delegatecall
          ▼
      deployed LISA runtime
 ```
 
-The account layer owns authorization and smart-account behavior. The LISA runtime owns VM execution semantics.
+Each `LisaAccount` implementation is permanently bound to one deployed LISA runtime address through an immutable constructor argument. There is no runtime setter, generic delegatecall, owner storage, plugin system, or custom multicall.
 
-## Current status
+For ordinary atomic batches, clients can use the inherited ERC-7821 `execute` function. For programmable execution, clients can use `executeLisa(bytes)`.
 
-This repository currently contains infrastructure only:
+Both execution paths accept direct self-calls, as used by an EIP-7702 delegated EOA. ERC-7821 and LISA execution also accept the canonical ERC-4337 EntryPoint path provided by OpenZeppelin `Account`.
 
-- OpenZeppelin smart-account / EIP-7702 imports;
-- the minimal `ILisaAccount` integration interface;
-- an abstract `LisaAccount` composition scaffold;
-- deployment and test scaffolding;
-- Foundry configuration and CI.
+## Deployment
 
-The actual account authorization, runtime binding, execution logic, and deployment flow are intentionally not implemented yet.
+Deploy the LISA runtime first, then deploy the account implementation with that runtime address:
+
+```bash
+LISA_RUNTIME=0x... forge script script/DeployLisaAccount.s.sol:DeployLisaAccount --broadcast --rpc-url ...
+```
+
+A new LISA runtime version should normally correspond to a new account implementation deployment rather than mutating an existing binding.
 
 ## Dependencies
 
 - [forge-std](https://github.com/foundry-rs/forge-std)
 - [OpenZeppelin Contracts](https://github.com/OpenZeppelin/openzeppelin-contracts)
 
-OpenZeppelin Contracts is used for the account primitives (`Account`, `SignerEIP7702`, `ERC7821`, and token receiver helpers).
+There is deliberately no `lisa-evm` source dependency or submodule. The integration boundary is the deployed runtime address.
 
-There is deliberately **no `lisa-evm` submodule**. A concrete account deployment will reference a deployed LISA runtime address instead.
-
-## Commands
+## Development
 
 ```bash
+forge fmt
 forge build
 forge test
-forge fmt --check
 ```
 
 or:
@@ -55,3 +58,5 @@ or:
 ```bash
 make ci
 ```
+
+GitHub Actions runs formatting, build, and tests on pushes and pull requests.
