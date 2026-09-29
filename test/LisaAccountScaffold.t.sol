@@ -118,16 +118,8 @@ contract LisaAccountTest is Test {
         BatchTarget second = new BatchTarget();
 
         Execution[] memory calls = new Execution[](2);
-        calls[0] = Execution({
-            target: address(first),
-            value: 0,
-            callData: abi.encodeCall(BatchTarget.setValue, (11))
-        });
-        calls[1] = Execution({
-            target: address(second),
-            value: 0,
-            callData: abi.encodeCall(BatchTarget.setValue, (22))
-        });
+        calls[0] = Execution({target: address(first), value: 0, callData: abi.encodeCall(BatchTarget.setValue, (11))});
+        calls[1] = Execution({target: address(second), value: 0, callData: abi.encodeCall(BatchTarget.setValue, (22))});
 
         vm.prank(account);
         LisaAccount(payable(account)).execute(BATCH_MODE, abi.encode(calls));
@@ -141,11 +133,7 @@ contract LisaAccountTest is Test {
         BatchTarget target = new BatchTarget();
 
         Execution[] memory calls = new Execution[](1);
-        calls[0] = Execution({
-            target: address(target),
-            value: 0,
-            callData: abi.encodeCall(BatchTarget.setValue, (7))
-        });
+        calls[0] = Execution({target: address(target), value: 0, callData: abi.encodeCall(BatchTarget.setValue, (7))});
 
         vm.prank(address(LisaAccount(payable(account)).entryPoint()));
         LisaAccount(payable(account)).execute(BATCH_MODE, abi.encode(calls));
@@ -166,16 +154,8 @@ contract LisaAccountTest is Test {
         BatchTarget target = new BatchTarget();
 
         Execution[] memory calls = new Execution[](2);
-        calls[0] = Execution({
-            target: address(target),
-            value: 0,
-            callData: abi.encodeCall(BatchTarget.setValue, (99))
-        });
-        calls[1] = Execution({
-            target: address(target),
-            value: 0,
-            callData: abi.encodeCall(BatchTarget.fail, ())
-        });
+        calls[0] = Execution({target: address(target), value: 0, callData: abi.encodeCall(BatchTarget.setValue, (99))});
+        calls[1] = Execution({target: address(target), value: 0, callData: abi.encodeCall(BatchTarget.fail, ())});
 
         vm.expectRevert(BatchTarget.BatchFailure.selector);
         vm.prank(account);
