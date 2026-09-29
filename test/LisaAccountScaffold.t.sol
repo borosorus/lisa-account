@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 
-import {Account} from "@openzeppelin/contracts/account/Account.sol";
+import {Account as OZAccount} from "@openzeppelin/contracts/account/Account.sol";
 import {Execution} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
@@ -71,7 +71,7 @@ contract LisaAccountTest is Test {
     }
 
     function testExecuteLisaRejectsExternalCaller() public {
-        vm.expectRevert(abi.encodeWithSelector(Account.AccountUnauthorized.selector, address(this)));
+        vm.expectRevert(abi.encodeWithSelector(OZAccount.AccountUnauthorized.selector, address(this)));
         implementation.executeLisa(hex"01");
     }
 
@@ -145,7 +145,7 @@ contract LisaAccountTest is Test {
         address account = _delegatedAccount(ACCOUNT_KEY);
         Execution[] memory calls = new Execution[](0);
 
-        vm.expectRevert(abi.encodeWithSelector(Account.AccountUnauthorized.selector, address(this)));
+        vm.expectRevert(abi.encodeWithSelector(OZAccount.AccountUnauthorized.selector, address(this)));
         LisaAccount(payable(account)).execute(BATCH_MODE, abi.encode(calls));
     }
 
