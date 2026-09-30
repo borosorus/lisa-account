@@ -4,8 +4,11 @@ pragma solidity ^0.8.24;
 import {Test} from "forge-std/Test.sol";
 
 import {Account as OZAccount} from "@openzeppelin/contracts/account/Account.sol";
+import {ERC7821} from "@openzeppelin/contracts/account/extensions/draft-ERC7821.sol";
 import {Execution} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 import {LisaAccount} from "../src/LisaAccount.sol";
@@ -163,4 +166,94 @@ contract LisaAccountTest is Test {
 
         assertEq(target.value(), 0);
     }
+    function testExecuteLisaAllowsEntryPoint() public {
+        address account = _delegatedAccount(ACCOUNT_KEY);
+        bytes memory program = hex"abcd";
+        address entryPoint = address(LisaAccount(payable(account)).entryPoint());
+
+        vm.expectEmit(true, true, false, true, account);
+        emit RuntimeExecuted(account, entryPoint, 0, program);
+
+        vm.prank(entryPoint);
+        ILisaAccount(account).executeLisa(program);
+    }
+
+    function testExecuteLisaPreservesMsgValue() public {
+        address account = _delegatedAccount(ACCOUNT_KEY);
+        bytes memory program = hex"42";
+        uint256 amount = 1 ether;
+        vm.deal(account, amount);
+
+        vm.expectEmit(true, true, false, true, account);
+        emit RuntimeExecuted(account, account, amount, program);
+
+        vm.prank(account);
+        ILisaAccount(account).executeLisa{value: amount}(program);
+
+        assertEq(account.balance, amount);
+    }
+
+    function testERC1271MalformedSignatureReturnsInvalid() public {
+        address account = _delegatedAccount(ACCOUNT_KEY);
+
+        assertEq(IERC1271(account).isValidSignature(keccak256("bad-signature"), hex"1234"), bytes4(0xffffffff));
+    }
+
+    function testERC7821ModeSupport() public {
+        address account = _delegatedAccount(ACCOUNT_KEY);
+        LisaAccount delegated = LisaAccount(payable(account));
+
+        assertTrue(delegated.supportsExecutionMode(BATCH_MODE));
+        assertFalse(delegated.supportsExecutionMode(bytes32(0)));
+
+        Execution[] memory calls = new Execution[](0);
+        vm.expectRevert(ERC7821.UnsupportedExecutionMode.selector);
+        vm.prank(account);
+        delegated.execute(bytes32(0), abi.encode(calls));
+    }
+
+    function testERC7821ForwardsValueFromAccountBalance() public {
+        address account = _delegatedAccount(ACCOUNT_KEY);
+        BatchTarget target = new BatchTarget();
+        uint256 amount = 0.25 ether;
+        vm.deal(account, 1 ether);
+
+        Execution[] memory calls = new Execution[](1);
+        calls[0] = Execution({
+            target: address(target),
+            value: amount,
+            callData: abi.encodeCall(BatchTarget.setValue, (123))
+        });
+
+        vm.prank(account);
+        LisaAccount(payable(account)).execute(BATCH_MODE, abi.encode(calls));
+
+        assertEq(target.value(), 123);
+        assertEq(address(target).balance, amount);
+        assertEq(account.balance, 1 ether - amount);
+    }
+
+    function testAccountReceivesEther() public {
+        address account = _delegatedAccount(ACCOUNT_KEY);
+        uint256 amount = 0.5 ether;
+        vm.deal(address(this), amount);
+
+        (bool success,) = payable(account).call{value: amount}("");
+
+        assertTrue(success);
+        assertEq(account.balance, amount);
+    }
+
+    function testTokenReceiverHooksAreAvailable() public {
+        assertEq(
+            implementation.onERC721Received(address(this), address(this), 1, ""),
+            IERC721Receiver.onERC721Received.selector
+        );
+        assertEq(
+            implementation.onERC1155Received(address(this), address(this), 1, 1, ""),
+            IERC1155Receiver.onERC1155Received.selector
+        );
+        assertTrue(implementation.supportsInterface(type(IERC1155Receiver).interfaceId));
+    }
+
 }
