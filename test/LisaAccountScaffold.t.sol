@@ -166,6 +166,7 @@ contract LisaAccountTest is Test {
 
         assertEq(target.value(), 0);
     }
+
     function testExecuteLisaAllowsEntryPoint() public {
         address account = _delegatedAccount(ACCOUNT_KEY);
         bytes memory program = hex"abcd";
@@ -219,11 +220,8 @@ contract LisaAccountTest is Test {
         vm.deal(account, 1 ether);
 
         Execution[] memory calls = new Execution[](1);
-        calls[0] = Execution({
-            target: address(target),
-            value: amount,
-            callData: abi.encodeCall(BatchTarget.setValue, (123))
-        });
+        calls[0] =
+            Execution({target: address(target), value: amount, callData: abi.encodeCall(BatchTarget.setValue, (123))});
 
         vm.prank(account);
         LisaAccount(payable(account)).execute(BATCH_MODE, abi.encode(calls));
@@ -255,5 +253,4 @@ contract LisaAccountTest is Test {
         );
         assertTrue(implementation.supportsInterface(type(IERC1155Receiver).interfaceId));
     }
-
 }
