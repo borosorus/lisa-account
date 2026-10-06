@@ -51,12 +51,17 @@ A new LISA runtime version should normally correspond to a new account implement
 
 ## Setting the delegation
 
-`script/SetDelegation.s.sol` points an EOA at an implementation. The EOA sends the transaction itself, as an EIP-7702 (type-0x04) transaction carrying its own signed authorization, so no third party ever holds the delegation:
+`script/SetDelegation.s.sol` points an EOA at an implementation. Give it the signing account the way you would for any Foundry script; the script itself never sees a key. It asks Forge's signer to sign the EIP-7702 authorization, and the EOA sends the resulting type-0x04 transaction to itself, so no third party ever holds the delegation:
 
 ```bash
-PRIVATE_KEY=0x... forge script script/SetDelegation.s.sol --rpc-url <rpc-url> --broadcast
+forge script script/SetDelegation.s.sol --rpc-url <rpc-url> --broadcast --interactive
+
+# or, without the prompt
+forge script script/SetDelegation.s.sol --rpc-url <rpc-url> --broadcast \
+  --keystore ~/.foundry/keystores/my-eoa
 ```
 
+- The delegated account is the account Forge broadcasts from, so pass exactly one: `--interactive`, `--keystore`/`--account`, or `--private-key`. No `PRIVATE_KEY` environment variable is involved, and no key ever enters the script.
 - `DELEGATION_TARGET` selects the implementation; it defaults to the mainnet deployment above.
 - The authorization is chain-scoped, so it cannot be replayed on another chain.
 - The script is idempotent: it does nothing if the EOA already delegates to the target, and reverts with `AlreadyDelegated`, naming both addresses, rather than silently replacing a delegation that points somewhere else.
