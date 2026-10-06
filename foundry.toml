@@ -5,6 +5,9 @@ script = "script"
 out = "out"
 libs = ["lib"]
 solc_version = "0.8.24"
+# Execution spec for Forge's EVM, so script simulations accept EIP-7702 (type-0x04) transactions.
+# solc's own target stays clamped to what 0.8.24 supports, so bytecode is unaffected.
+evm_version = "prague"
 optimizer = true
 optimizer_runs = 200
 remappings = [

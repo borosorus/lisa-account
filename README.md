@@ -49,6 +49,20 @@ LISA_RUNTIME=0x... forge script script/DeployLisaAccount.s.sol:DeployLisaAccount
 
 A new LISA runtime version should normally correspond to a new account implementation deployment rather than mutating an existing binding.
 
+## Setting the delegation
+
+`script/SetDelegation.s.sol` points an EOA at an implementation. The EOA sends the transaction itself, as an EIP-7702 (type-0x04) transaction carrying its own signed authorization, so no third party ever holds the delegation:
+
+```bash
+PRIVATE_KEY=0x... forge script script/SetDelegation.s.sol --rpc-url <rpc-url> --broadcast
+```
+
+- `DELEGATION_TARGET` selects the implementation; it defaults to the mainnet deployment above.
+- The authorization is chain-scoped, so it cannot be replayed on another chain.
+- The script is idempotent: it does nothing if the EOA already delegates to the target, and reverts with `AlreadyDelegated`, naming both addresses, rather than silently replacing a delegation that points somewhere else.
+- Moving an account to a new implementation is out of scope here on purpose. EIP-7702 clears a delegation with an authorization that designates the zero address, and this script refuses to sign one, so re-pointing cannot happen by accident.
+- Omit `--broadcast` for a dry run. `foundry.toml` pins `evm_version = "prague"` so Forge's EVM accepts the type-0x04 transaction; it does not change solc's codegen target, so the built bytecode still matches the deployed implementation.
+
 ## Dependencies
 
 - [forge-std](https://github.com/foundry-rs/forge-std)
