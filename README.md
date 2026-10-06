@@ -30,6 +30,17 @@ Both execution paths accept direct self-calls, as used by an EIP-7702 delegated 
 
 ## Deployment
 
+### Ethereum Mainnet
+
+| Contract | Address |
+| --- | --- |
+| LisaAccount implementation | [`0xE702F9FB288Bb97d359DA5eCB42532EAC6078871`](https://etherscan.io/address/0xE702F9FB288Bb97d359DA5eCB42532EAC6078871) |
+| Bound LISA runtime | [`0x7F6b058AAF78BC690f781F0914499C460Ff342D9`](https://etherscan.io/address/0x7F6b058AAF78BC690f781F0914499C460Ff342D9) |
+
+Deployment transaction: [`0xb01c26e04ffd4afb8cdf72ee17518bcb4e744f29ebf2625f1d33fced38d55797`](https://etherscan.io/tx/0xb01c26e04ffd4afb8cdf72ee17518bcb4e744f29ebf2625f1d33fced38d55797).
+
+### Deploying another implementation
+
 Deploy the LISA runtime first, then deploy the account implementation with that runtime address:
 
 ```bash
